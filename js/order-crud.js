@@ -58,7 +58,9 @@ formOrder?.addEventListener("submit", (e) => {
 
   // Get all selected products
   const productElements = document.querySelectorAll(".product-dropdown");
-  const quantityElements = document.querySelectorAll("input[name='product-qty[]']");
+  const quantityElements = document.querySelectorAll(
+    "input[name='product-qty[]']"
+  );
 
   let products = [];
   productElements.forEach((select, index) => {
@@ -85,7 +87,6 @@ formOrder?.addEventListener("submit", (e) => {
     formOrder.reset();
   }
 });
-
 
 // Render orders to the page
 function renderOrders() {
@@ -144,7 +145,7 @@ function renderOrders() {
     });
   }
 
-  document.getElementById("order-count").textContent = orders?.length;
+  document.getElementById("order-count").textContent = orders.length;
 }
 
 // Delete order
@@ -166,8 +167,7 @@ window.editOrder = (index) => {
   editingIndexOrder = index;
 };
 
-
-document.addEventListener("DOMContentLoaded", function () {
+document?.addEventListener("DOMContentLoaded", function () {
   console.log("DOM Loaded"); // Debugging
 
   const addProductBtn = document.getElementById("add-product-btn");
@@ -222,13 +222,15 @@ document.addEventListener("DOMContentLoaded", function () {
     productContainer.appendChild(productDiv);
 
     // Remove product event
-    productDiv.querySelector(".remove-product").addEventListener("click", function () {
-      productDiv.remove();
-    });
+    productDiv
+      .querySelector(".remove-product")
+      .addEventListener("click", function () {
+        productDiv.remove();
+      });
   });
 });
 
-document.getElementById("order-id").addEventListener("input", function () {
+document.getElementById("order-id")?.addEventListener("input", function () {
   const orderId = document.getElementById("order-id").value.trim();
 
   if (orderId === "") {
@@ -242,7 +244,6 @@ document.getElementById("order-id").addEventListener("input", function () {
     });
   }
 });
-
 
 // Initial render of orders
 renderOrders();
