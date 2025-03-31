@@ -230,7 +230,7 @@ document?.addEventListener("DOMContentLoaded", function () {
   });
 });
 
-document.getElementById("order-id")?.addEventListener("input", function () {
+document?.getElementById("order-id")?.addEventListener("input", function () {
   const orderId = document.getElementById("order-id").value.trim();
 
   if (orderId === "") {
