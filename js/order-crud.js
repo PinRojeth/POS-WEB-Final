@@ -10,8 +10,8 @@ let editingIndexOrder = null;
 function getCookie(name) {
   let cookies = document.cookie.split(";");
   for (const cookie of cookies) {
-    const [cookieName, cookieValue] = cookie.split("=");
-    if (cookieName.trim() === name) {
+    const [cookieName, cookieValue] = cookie.trim().split("=");
+    if (cookieName === name) {
       return decodeURIComponent(cookieValue);
     }
   }
@@ -51,12 +51,26 @@ function generateBarcode(orderID, canvasID) {
 // Handle form submission
 formOrder?.addEventListener("submit", (e) => {
   e.preventDefault();
+
   const orderID = orderIDInput.value.trim();
   const status = Number(statusOrderInput.value);
   const description = descriptionInputOrder.value.trim();
 
+  // Get all selected products
+  const productElements = document.querySelectorAll(".product-dropdown");
+  const quantityElements = document.querySelectorAll("input[name='product-qty[]']");
+
+  let products = [];
+  productElements.forEach((select, index) => {
+    const productName = select.value.trim();
+    const productQty = Number(quantityElements[index].value);
+    if (productName && productQty > 0) {
+      products.push({ name: productName, quantity: productQty });
+    }
+  });
+
   if (orderID) {
-    const newOrder = { orderID, status, description };
+    const newOrder = { orderID, status, description, products };
     if (editingIndexOrder === null) {
       // Add a new order if we are not editing
       orders.push(newOrder);
@@ -72,23 +86,36 @@ formOrder?.addEventListener("submit", (e) => {
   }
 });
 
+
 // Render orders to the page
 function renderOrders() {
   if (orderList) {
     orderList.innerHTML = "";
+
     orders.forEach((order, index) => {
+      let productRows = "";
+      if (order.products && order.products.length > 0) {
+        order.products.forEach((product) => {
+          productRows += `
+            <div><strong>${product.name}</strong> - ${product.quantity}</div>
+          `;
+        });
+      } else {
+        productRows = `<span class="text-muted">No products</span>`;
+      }
+
       orderList.innerHTML += `<tr>
         <td>${(index + 1).toString().padStart(1, "0")}</td>
         <td>
-          <svg id="barcode-${index}"></svg> <!-- Barcode will be displayed here -->
+          <svg id="barcode-${index}"></svg> <!-- Barcode -->
         </td>
         <td>${order.orderID}</td>
         <td><span class="badge ${
           order.status === 1
-            ? "bg-success" 
+            ? "bg-success"
             : order.status === 2
-            ? "bg-warning" 
-            : "bg-danger" 
+            ? "bg-warning"
+            : "bg-danger"
         }">
             ${
               order.status === 1
@@ -97,8 +124,10 @@ function renderOrders() {
                 ? "Pending"
                 : "Fail"
             }
-          </span></td>
+          </span>
+        </td>
         <td>${order.description}</td>
+        <td>${productRows}</td> <!-- Display products here -->
         <td>
           <button class="btn btn-success btn-sm" onclick="editOrder(${index})">Edit</button>
           <button class="btn btn-danger btn-sm" onclick="deleteOrder(${index})">Delete</button>
@@ -107,10 +136,10 @@ function renderOrders() {
 
       // Generate barcode for each order inside the <svg> element
       JsBarcode(`#barcode-${index}`, order.orderID, {
-        format: "CODE128", 
-        lineColor: "#000000", 
+        format: "CODE128",
+        lineColor: "#000000",
         width: 1.5,
-        height: 16, 
+        height: 16,
       });
     });
   }
@@ -137,8 +166,67 @@ window.editOrder = (index) => {
   editingIndexOrder = index;
 };
 
-// Initial render of orders
-renderOrders();
+
+document.addEventListener("DOMContentLoaded", function () {
+  console.log("DOM Loaded"); // Debugging
+
+  const addProductBtn = document.getElementById("add-product-btn");
+  const productContainer = document.getElementById("product-container");
+
+  function loadProduct() {
+    let productCookie = getCookie("products");
+    return productCookie ? JSON.parse(productCookie) : [];
+  }
+
+  if (!addProductBtn) {
+    console.error("Button with ID 'add-product-btn' not found!");
+    return;
+  }
+
+  addProductBtn.addEventListener("click", function () {
+    console.log("Add Product Clicked");
+
+    const products = loadProduct(); // Load products from cookie
+
+    const productDiv = document.createElement("div");
+    productDiv.classList.add("row", "g-3", "mt-2", "align-items-center");
+
+    productDiv.innerHTML = `
+      <div class="col-md-6">
+        <div class="form-floating">
+          <select class="form-select product-dropdown" name="product-name[]" required>
+            <option value="">Select a Product</option>
+            ${products
+              .map(
+                (product) =>
+                  `<option value="${product.productName}">${product.productName}</option>`
+              )
+              .join("")}
+          </select>
+          <label>Product Name</label>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="form-floating">
+          <input type="number" class="form-control" name="product-qty[]" placeholder="Quantity" required />
+          <label>Quantity</label>
+        </div>
+      </div>
+      <div class="col-md-2 text-end">
+        <button type="button" class="btn btn-danger remove-product">
+          <i class="fa-solid fa-trash"></i>
+        </button>
+      </div>
+    `;
+
+    productContainer.appendChild(productDiv);
+
+    // Remove product event
+    productDiv.querySelector(".remove-product").addEventListener("click", function () {
+      productDiv.remove();
+    });
+  });
+});
 
 document.getElementById("order-id").addEventListener("input", function () {
   const orderId = document.getElementById("order-id").value.trim();
@@ -155,3 +243,6 @@ document.getElementById("order-id").addEventListener("input", function () {
   }
 });
 
+
+// Initial render of orders
+renderOrders();
